@@ -55,7 +55,7 @@ impl<'a> Accounts for AccountsImpl<'a> {
             &[&entity.email, &entity.hashed_password, &entity.display_name],
         )
         .await
-        .ok();
+        .ok(); // Reuslt => Optionに変換
     }
 }
 
