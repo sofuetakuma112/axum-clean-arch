@@ -32,6 +32,7 @@ async fn post(
     redirect_with_session(session_token)
 }
 
+// ログイン
 async fn new_session(
     form: Form<SignInForm>,
     Extension(repository_provider): Extension<RepositoryProvider>,

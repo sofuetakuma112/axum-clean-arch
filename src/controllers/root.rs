@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Query},
-    response::IntoResponse,
+    response::{Headers, IntoResponse},
     routing, Router,
 };
 use serde::Deserialize;
@@ -28,16 +28,20 @@ async fn get(
     _: UserContext, // 認証が必要なリクエストのハンドラー関数の引数にUserContext型の引数を追加するだけで、自動的にミドルウェアが割り当てられる？
     Extension(repository_provider): Extension<RepositoryProvider>,
 ) -> impl IntoResponse {
-    let tweet_repo = repository_provider.tweets(); // リポジトリの実装を取得する
-    let home = services::list_tweets(&tweet_repo).await; // リポジトリの実装を受け取ってビューを返す
+    let tweet_repo = repository_provider.tweets(); // Tweetsリポジトリの実装を取得する
+    let account_repo = repository_provider.accounts(); // Accountsリポジトリの実装を取得する
+    let home = services::list_tweets(&tweet_repo, &account_repo).await; // リポジトリの実装を受け取ってビューを返す
     response::from_template(home)
 }
 
 // ログインページを返す
 async fn login(query: Query<LoginQuery>) -> impl IntoResponse {
-    response::from_template(SignIn {
+    let empty_session_token = services::clear_session();
+    let headers = Headers(vec![("Set-Cookie", empty_session_token.cookie())]);
+    let response = response::from_template(SignIn {
         error: query.error.is_some(),
-    })
+    });
+    (headers, response)
 }
 
 // サインアップページを返す

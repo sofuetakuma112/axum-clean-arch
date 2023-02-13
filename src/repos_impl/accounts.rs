@@ -4,13 +4,41 @@ use crate::database::ConnectionPool;
 use crate::entities::Account;
 use crate::repositories::Accounts;
 
+use std::collections::{HashMap, HashSet};
+
 pub struct AccountsImpl<'a> {
     pub pool: &'a ConnectionPool,
 }
 
 #[axum::async_trait]
 impl<'a> Accounts for AccountsImpl<'a> {
-    // emailを使ってaccountsからユーザーを検索する
+    async fn find(&self, ids: HashSet<i32>) -> HashMap<i32, Account> {
+        if ids.is_empty() {
+            return HashMap::new();
+        }
+
+        let conn = self.pool.get().await.unwrap();
+        let ids_str = ids
+            .into_iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+        let rows = conn
+            .query(
+                &format!("SELECT * FROM accounts WHERE id in ({})", ids_str),
+                &[],
+            )
+            .await
+            .unwrap();
+        rows.into_iter()
+            .map(|x| {
+                let account: Account = x.into();
+                (account.id().unwrap(), account)
+            })
+            .collect()
+    }
+
+    /// emailを使ってaccountsからユーザーを検索する
     async fn find_by(&self, email: &str) -> Option<Account> {
         let conn = self.pool.get().await.unwrap();
         let row = conn

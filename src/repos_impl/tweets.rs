@@ -41,8 +41,8 @@ impl<'a> Tweets for TweetsImpl<'a> {
         } else {
             // 新規作成
             conn.execute(
-                "INSERT INTO tweets (message, posted_at) VALUES ($1, $2)",
-                &[&entity.message, &entity.posted_at],
+                "INSERT INTO tweets (message, posted_at, posted_by) VALUES ($1, $2, $3)",
+                &[&entity.message, &entity.posted_at, &entity.posted_by],
             )
             .await
             .ok();
@@ -52,6 +52,11 @@ impl<'a> Tweets for TweetsImpl<'a> {
 
 impl From<Row> for Tweet {
     fn from(r: Row) -> Self {
-        Tweet::new(r.get("id"), r.get("message"), r.get("posted_at"))
+        Tweet::new(
+            r.get("id"),
+            r.get("message"),
+            r.get("posted_at"),
+            r.get("posted_by"),
+        )
     }
 }
